@@ -2,9 +2,7 @@
 
 Here is the properly formatted README file for your repository.
 
----
 
-```markdown
 # 🧠 Failure-Aware Domain Generalization for Brain Tumor MRI Classification
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
