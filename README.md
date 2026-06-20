@@ -170,6 +170,10 @@ This project is licensed under the MIT License.
 
 We thank the creators of the BR35H and BTD datasets, the PyTorch and HuggingFace Timm teams, and the domain adaptation research community.
 
+🔗 Dataset Links
+BR35H (Source Domain): This dataset is available on Kaggle at https://www.kaggle.com/datasets/ahmedhamada0/brain-tumor-detection.
+
+BTD (Target Domain): You can find this dataset on Kaggle at https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset.
 ---
 
 ## Contact
