@@ -1,114 +1,69 @@
-# 📄 README.md - Complete GitHub Documentation
-
-Here is the properly formatted README file for your repository.
-
-
 # 🧠 Failure-Aware Domain Generalization for Brain Tumor MRI Classification
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-> **AI that knows when it's wrong: A safety-first approach to brain tumor detection across hospitals**
+AI that knows when it's wrong: A safety-first approach to brain tumor detection across hospitals.
 
 ---
 
-## 📌 Overview
+## What This Project Does
 
-This repository implements a **failure-aware domain generalization pipeline** for brain tumor MRI classification. Instead of just predicting tumors, the model also tells you when it might be wrong—because in healthcare, knowing your limits is as important as being right.
+This repository implements a failure-aware domain generalization pipeline for brain tumor MRI classification. The model doesn't just predict tumors—it also tells you when it might be wrong. Because in healthcare, knowing your limits is as important as being right.
 
-### 🔬 What Makes This Different
-
-- **Domain Adaptation**: Works across different hospitals/scanners using DANN and MixStyle
-- **Failure Prediction**: Learns to predict its own mistakes (no manual labeling needed)
-- **Safety Metrics**: Introduces **False Safe Rate (FSR)** —a metric that measures dangerous overconfidence
-- **6 Architectures**: Compare ResNet50, DenseNet121, EfficientNet-B0, ConvNeXt, Swin, DeiT
-- **Two Evaluation Protocols**: Standard Calibration (safety priority) and SAFE Evaluation (sensitivity priority)
-- **Clinical Ready**: Risk-coverage analysis and deployment guidelines included
+The approach works across different hospitals and scanners using DANN and MixStyle for domain adaptation. The failure head learns to predict mistakes without requiring manual labeling. We introduce False Safe Rate (FSR) as a metric that measures dangerous overconfidence. The code supports six architectures: ResNet50, DenseNet121, EfficientNet-B0, ConvNeXt, Swin Transformer, and DeiT.
 
 ---
 
-## 📊 Key Results
+## Key Results
 
 ### Standard Calibration (Safety Priority)
 
-| Model | Accuracy | Sensitivity | Specificity | FSR ↓ | Failure F1 | Failure Recall | AUC |
-|-------|----------|-------------|-------------|-------|------------|----------------|-----|
-| **Swin-Tiny** | **90.09%** | 87.20% | 96.55% | **7.69%** | 0.400 | **92.31%** | **0.978** |
+| Model | Accuracy | Sensitivity | Specificity | FSR | Failure F1 | Failure Recall | AUC |
+|-------|----------|-------------|-------------|-----|------------|----------------|-----|
+| Swin-Tiny | 90.09% | 87.20% | 96.55% | 7.69% | 0.400 | 92.31% | 0.978 |
 | EfficientNet-B0 | 85.82% | 80.79% | 97.04% | 11.83% | 0.414 | 88.17% | 0.973 |
 | DeiT | 85.67% | 81.46% | 95.07% | 0.00%* | 0.282 | 100.00%* | 0.969 |
 | ResNet50 | 76.37% | 68.21% | 94.58% | 13.55% | 0.528 | 86.45% | 0.941 |
 | DenseNet121 | 72.56% | 61.81% | 96.55% | 30.56% | 0.598 | 69.44% | 0.950 |
 | ConvNeXt | 70.88% | 59.60% | 96.06% | 66.49% | 0.357 | 33.51% | 0.891 |
 
-*Note: DeiT had only 3 incorrect predictions, making FSR statistically unstable.
+*DeiT had only 3 incorrect predictions, making FSR statistically unstable.
 
 ### SAFE Evaluation (Sensitivity Priority)
 
 | Model | Accuracy | Sensitivity | Specificity | FSR | Failure Recall |
 |-------|----------|-------------|-------------|-----|----------------|
-| **Swin-Tiny** | **93.75%** | **93.16%** | 95.07% | 14.63% | 85.37% |
+| Swin-Tiny | 93.75% | 93.16% | 95.07% | 14.63% | 85.37% |
 | DeiT | 91.16% | 89.40% | 95.07% | 25.86% | 74.14% |
 | EfficientNet-B0 | 88.11% | 84.55% | 96.06% | 34.62% | 65.38% |
 
-### 🎯 The Big Takeaway
+### The Big Takeaway
 
-> **Swin Transformer achieves the lowest False Safe Rate (7.69%)**, meaning fewer than 8 out of every 100 errors would be dangerously trusted. This meets the proposed clinical safety threshold of <15% FSR.
+The Swin Transformer achieves the lowest False Safe Rate at 7.69%, meaning fewer than 8 out of every 100 errors would be dangerously trusted. This meets the proposed clinical safety threshold of less than 15% FSR.
 
-> **Accuracy alone is misleading** — ConvNeXt (70.88% accuracy) has FSR of 66.49%, while ResNet50 (76.37% accuracy) has FSR of 13.55%. A less accurate model can be clinically safer.
-
----
-
-## 🏗️ Pipeline Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     DATA PIPELINE                          │
-├─────────────────────────────────────────────────────────────┤
-│  BR35H (Source) ──► Augmentation ──► Train (80%)          │
-│                    └─► Validate (20%)                      │
-│  BTD (Target) ────► Split ──► DANN Target (50%)           │
-│                              └─► Final Test (50%)          │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│                     MODEL ARCHITECTURE                      │
-├─────────────────────────────────────────────────────────────┤
-│  Input MRI (224×224)                                       │
-│       ↓                                                    │
-│  Backbone (6 architectures supported)                      │
-│       ↓                                                    │
-│  ┌───────┴───────┐                                         │
-│  ↓               ↓                                         │
-│ Classification  Failure Head                               │
-│     Head        (LayerNorm + LeakyReLU + Dropout)          │
-│  ┌───────┐     ┌─────────────────┐                         │
-│  │Tumor? │     │ Safety Score   │                         │
-│  └───────┘     └─────────────────┘                         │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│                   DOMAIN GENERALIZATION                     │
-├─────────────────────────────────────────────────────────────┤
-│  • DANN: Gradient reversal to learn domain-invariant features│
-│  • MixStyle: Random style mixing for data augmentation     │
-└─────────────────────────────────────────────────────────────┘
-```
+Accuracy alone can be misleading. ConvNeXt achieves 70.88% accuracy but has an FSR of 66.49%, while ResNet50 achieves 76.37% accuracy with an FSR of only 13.55%. A less accurate model can actually be clinically safer.
 
 ---
 
-## 🚀 Getting Started
+## Pipeline Architecture
+
+The pipeline follows a clear flow. The BR35H dataset serves as the source domain and is split into 80% training and 20% validation with augmentation applied to the training set. The BTD dataset is the target domain and is split equally into DANN training and final test sets.
+
+The model architecture takes an input MRI of 224×224 pixels and passes it through a backbone feature extractor. From there, it branches into two heads. The classification head predicts whether a tumor is present. The failure head, which uses LayerNorm, LeakyReLU, and dropout, outputs a safety score indicating how likely the prediction is to be wrong.
+
+For domain generalization, we use two techniques. DANN applies gradient reversal to learn domain-invariant features. MixStyle performs random style mixing for data augmentation.
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-```bash
-Python 3.8+
-CUDA 11.0+ (for GPU training)
-```
+You need Python 3.8 or higher and CUDA 11.0 or higher for GPU training.
 
 ### Installation
 
-```bash
+Clone the repository and install dependencies:
+
+```
 git clone https://github.com/yourusername/failure-aware-brain-mri.git
 cd failure-aware-brain-mri
 pip install -r requirements.txt
@@ -116,12 +71,9 @@ pip install -r requirements.txt
 
 ### Dataset Setup
 
-```bash
-# Download datasets
-# BR35H: https://data.mendeley.com/datasets/8zwbr82bbk/1
-# BTD: https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-dataset
+Download the BR35H dataset from Mendeley Data and the BTD dataset from Kaggle. Organize them as follows:
 
-# Organize as:
+```
 data/
 ├── BR35H/
 │   └── train/
@@ -137,154 +89,63 @@ data/
 
 ### Run Training
 
-```bash
-# Train all models
-python train.py
-
-# Train specific model
-python train.py --model swin_tiny --epochs 30
-
-# Evaluation only
-python evaluate.py --checkpoint checkpoints/swin_tiny_best.pth
-```
+To train all models, run `python train.py`. To train a specific model, use `python train.py --model swin_tiny --epochs 30`. For evaluation only, use `python evaluate.py --checkpoint checkpoints/swin_tiny_best.pth`.
 
 ---
 
-## 📊 Results & Visualizations
+## Results and Visualizations
 
 ### Failure Head Performance
 
-The failure head learns to separate correct vs incorrect predictions:
-
-| Model | Correct Mean | Incorrect Mean | Separation | T-test p-value | Correlation | Status |
-|-------|--------------|----------------|------------|----------------|-------------|--------|
-| EfficientNet-B0 | 0.1712 | 0.5107 | 0.3395 | <0.001 | 0.472 | Healthy |
-| Swin-Tiny | 0.0953 | 0.0664 | -0.0289 | 0.7805 | 0.350 | Weak* |
-| DeiT-Small | 0.1033 | 0.5121 | 0.4088 | 0.0016 | 0.330 | Healthy |
-| DenseNet121 | 0.1708 | 0.4788 | 0.3080 | <0.001 | 0.323 | Healthy |
-| ResNet50 | 0.1724 | 0.3868 | 0.2144 | <0.001 | 0.318 | Healthy |
-| ConvNeXt-Tiny | 0.1832 | 0.5955 | 0.4123 | 0.0065 | 0.088 | Weak |
-
-*Swin-T shows weak statistical differentiation (p=0.78) but maintains good correlation (0.35) and excellent AUC (0.978). The weak result is likely due to small error sample (n=4).
+The failure head learns to separate correct from incorrect predictions. EfficientNet-B0 shows the best performance with a separation of 0.3395, a p-value less than 0.001, and a correlation of 0.472. Swin-Tiny shows weak statistical differentiation with a p-value of 0.7805 but maintains good correlation at 0.350 and excellent AUC at 0.978. The weak result is likely due to the small error sample of only 4 incorrect predictions.
 
 ### Risk-Coverage Analysis
 
-For Swin-T: Rejecting just 10% of uncertain cases reduces FSR from 7.69% to below 3%.
+For the Swin Transformer, rejecting just 10% of uncertain cases reduces the False Safe Rate from 7.69% to below 3%.
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
-```
-failure-aware-brain-mri/
-├── data/                       # Dataset loaders and preprocessing
-│   ├── dataset.py              # Custom dataset classes
-│   └── transforms.py           # Augmentations
-│
-├── models/                     # Model architectures
-│   ├── backbones.py            # Feature extractors (6 architectures)
-│   ├── failure_head.py         # Failure prediction head with LayerNorm
-│   └── dann.py                 # Domain adaptation layers
-│
-├── training/                   # Training utilities
-│   ├── train.py                # Main training loop
-│   ├── loss.py                 # Multi-task loss function
-│   └── scheduler.py            # Learning rate schedules
-│
-├── evaluation/                 # Evaluation scripts
-│   ├── metrics.py              # Classification metrics
-│   ├── failure_metrics.py      # Failure prediction metrics
-│   └── visualize.py            # Visualizations
-│
-├── configs/                    # Configuration files
-│   └── config.yaml
-│
-├── checkpoints/                # Saved models
-├── plots/                      # Generated visualizations
-├── results/                    # Evaluation results
-├── requirements.txt            # Dependencies
-└── README.md                   # This file
-```
+The repository is organized into several directories. The data directory contains dataset loaders and preprocessing code. The models directory holds the backbone implementations, the failure head with LayerNorm, and the DANN layers. The training directory includes the main training loop, loss functions, and learning rate schedules. The evaluation directory contains metrics calculation and visualization scripts. Configurations are stored in the configs directory. Checkpoints, plots, and results are saved in their respective directories.
 
 ---
 
-## 🛠️ Key Technical Details
+## Key Technical Details
 
 ### Loss Function
 
-```
-L_total = L_class + 3.0 × L_failure + 0.2 × L_domain
-
-L_failure = BCE(target, pred) + 0.5 × diversity_reg + 5.0 × margin_loss
-target = (1 - confidence) + 0.5 × (is_incorrect)
-```
+The total loss combines three components: classification loss, failure loss, and domain loss. The failure loss itself includes binary cross-entropy, diversity regularization, and margin loss. The target for the failure head is calculated as one minus confidence plus 0.5 times the incorrect indicator.
 
 ### Architecture Highlights
 
-- **Failure Head**: LayerNorm (not BatchNorm) for consistent train/eval behavior under domain shift
-- **DANN**: Progressive alpha schedule (0 → 1) with gradient reversal
-- **Separate Learning Rates**: Failure head gets 10× higher LR for faster adaptation
-- **Margin Loss**: Forces incorrect failure scores ≥ correct failure scores + 0.15
+The failure head uses LayerNorm instead of BatchNorm to maintain consistent behavior under domain shift. DANN uses a progressive alpha schedule from 0 to 1 with gradient reversal. The failure head gets 10 times higher learning rate for faster adaptation. The margin loss forces incorrect failure scores to be at least 0.15 higher than correct failure scores.
 
-### Safety Metrics Explained
+### Safety Metrics
 
-| Metric | What It Measures | Target | Swin-T Result |
-|--------|------------------|--------|---------------|
-| **False Safe Rate (FSR)** | % of errors dangerously trusted | <15% | **7.69%** ✅ |
-| **Failure Recall** | % of errors caught | >80% | **92.31%** ✅ |
-| **Failure F1** | Balanced safety performance | >0.4 | 0.400 |
+False Safe Rate measures the percentage of errors dangerously trusted, with a target below 15%. Failure Recall measures the percentage of errors caught, with a target above 80%. Failure F1 provides a balanced measure of safety performance.
 
 ### Two Evaluation Protocols
 
-| Protocol | Method | Best For | Swin-T FSR |
-|----------|--------|----------|------------|
-| **Standard Calibration** | Optimized class threshold (0.867) | Confirmatory diagnosis (safety priority) | 7.69% |
-| **SAFE Evaluation** | Temperature scaling (0.121) + percentile threshold | Screening / emergency (sensitivity priority) | 14.63% |
+Standard calibration uses an optimized class threshold of 0.867 and is best for confirmatory diagnosis where safety is the priority. This gives an FSR of 7.69% for Swin-T. SAFE evaluation uses temperature scaling of 0.121 and a percentile threshold, best for screening and emergency situations where sensitivity is the priority. This gives an FSR of 14.63% for Swin-T.
 
 ---
 
-## 📝 Results Summary
+## Clinical Deployment Guidelines
 
-### Statistical Significance (McNemar's Test)
-
-| Comparison | p-value | Significant? |
-|------------|---------|--------------|
-| Swin-T vs EfficientNet-B0 | 0.003 | ✅ Yes |
-| Swin-T vs ResNet50 | <0.001 | ✅ Yes |
-| Swin-T vs DenseNet121 | <0.001 | ✅ Yes |
-| Transformers vs CNNs | 0.012 | ✅ Yes |
-
----
-
-## 🏥 Clinical Deployment Guidelines
-
-| Scenario | Recommended Protocol | Recommended Model | Key Metric |
-|----------|---------------------|-------------------|------------|
-| **Confirmatory Diagnosis** | Standard Calibration | Swin-Tiny | FSR = 7.69% |
-| **Screening / Emergency** | SAFE Evaluation | Swin-Tiny | Sensitivity = 93.16% |
-| **Resource-constrained** | Standard Calibration | EfficientNet-B0 | FSR = 11.83% |
+For confirmatory diagnosis, use standard calibration with the Swin-Tiny model, which gives an FSR of 7.69%. For screening and emergency situations, use SAFE evaluation with Swin-Tiny, which gives a sensitivity of 93.16%. For resource-constrained settings, use standard calibration with EfficientNet-B0, which gives an FSR of 11.83%.
 
 ### Clinical Workflow
 
-```
-MRI Scan → Model Prediction + Failure Score
-                              ↓
-                    if failure_score < 0.057:
-                        → AUTOMATIC ACCEPT
-                    else:
-                        → FLAG FOR RADIOLOGIST REVIEW
-```
+The model processes an MRI scan and produces both a prediction and a failure score. If the failure score is below 0.057, the prediction is automatically accepted. If the failure score is 0.057 or higher, the case is flagged for radiologist review.
 
 ### FSR Thresholds for Deployment
 
-- **FSR < 10%**: ✅ Safe for autonomous deployment (Swin-T: 7.69%)
-- **FSR 10-15%**: ⚠️ Acceptable with oversight
-- **FSR 15-25%**: ⚠️ Human oversight required
-- **FSR > 25%**: ❌ Not recommended for clinical use
+An FSR below 10% is safe for autonomous deployment, and Swin-T achieves 7.69%. An FSR between 10% and 15% is acceptable with oversight. An FSR between 15% and 25% requires human oversight. An FSR above 25% is not recommended for clinical use.
 
 ---
 
-## 📚 Citation
+## Citation
 
 If you use this work, please cite:
 
@@ -299,36 +160,22 @@ If you use this work, please cite:
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- BR35H and BTD datasets
-- PyTorch and HuggingFace Timm teams
-- Domain adaptation research community
+This project is licensed under the MIT License.
 
 ---
 
-## 📧 Contact
+## Acknowledgments
 
-Questions? Suggestions? Reach out:
-- **Email**: amitgupta226571@gmail.com
-- **GitHub**: [@amitgupta226571](https://github.com/amitgupta226571)
+We thank the creators of the BR35H and BTD datasets, the PyTorch and HuggingFace Timm teams, and the domain adaptation research community.
 
 ---
 
-**Built with ❤️ for safer medical AI**
-```
+## Contact
+
+For questions or suggestions, reach out to amitgupta226571@gmail.com or visit https://github.com/amitgupta226571.
 
 ---
 
-## Quick Copy Instructions
-
-1. Click the copy button on the code block above
-2. Create a new file named `README.md` in your repository root
-3. Paste the content
-4. Save and commit
+Built with ❤️ for safer medical AI.
